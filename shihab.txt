@@ -99,7 +99,7 @@ print(f"Accuracy: {accuracy * 100:.2f}%")
 
 
 
-Module 1: Second Part
+*************************************Module 1: Second Part
 
 
 import pandas as pd
@@ -211,5 +211,251 @@ y_pred = knn.predict(X_test)
 # Calculate accuracy
 accuracy = accuracy_score(y_test, y_pred)
 print(f"Accuracy for distorted dataset: {accuracy * 100:.2f}%")
+
+
+
+
+
+######################################################################################## Module 2 #########################################################################
+***********Perceptron V_1
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score
+
+
+# Initialization of weights and parameters
+def initialize_weights(n_inputs):
+    weights = np.random.uniform(-0.01, 0.01, n_inputs + 1)
+    return weights
+
+def step_function(z):
+    return 1 if z > 0 else 0
+
+# Training the perceptron
+def train_perceptron_1(X, y, weights, threshold= 0.5, n_iterations=100):
+    weights[0] = -threshold
+    num_samples = X.shape[0]
+    bias_column = np.ones((num_samples, 1))
+    X = np.concatenate((bias_column, X), axis=1)
+
+    for iteration in range(n_iterations):
+        for i in range(len(X)):
+            xi = X[i]
+            target = y[i]
+            weighted_sum = np.dot(weights, xi)
+            y_pred = step_function(weighted_sum)
+
+
+            if target == 1 and y_pred == 0:
+                weights +=  xi
+            elif target == 0 and y_pred == 1:
+                weights -=  xi
+
+
+    return weights
+
+def predict_perceptron_1(X_test, weights):
+    num_samples = X_test.shape[0]             
+    bias_column = np.ones((num_samples, 1)) 
+    X_test_with_bias = np.concatenate((bias_column, X_test), axis=1)
+
+    predictions = []
+
+    for i in range(num_samples):
+        xi = X_test_with_bias[i]
+        dot_product = np.dot(weights, xi)
+        output = step_function(dot_product)
+        predictions.append(output)
+
+    return predictions
+
+data = pd.read_csv('AND_DATASET_Custom.csv', header=0 )
+
+X = data.iloc[:, :-1].values
+y = data.iloc[:, -1].values
+
+
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Initialize and train the perceptron
+n_inputs = X.shape[1]
+weights = initialize_weights(n_inputs)
+weights = train_perceptron_1(X_train, y_train, weights, n_iterations=100)
+
+
+# # Test the perceptron and evaluate accuracy
+y_pred = predict_perceptron_1(X_test, weights)
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy on test set (AND_DATASET_Custom):", accuracy*100, "%")
+
+
+**************************************************************** Perceptron V_2 (learning rate)
+
+**************************************************************** Widrow_Holf Perceptron
+
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import accuracy_score
+
+
+
+
+def initialize_weights(n_inputs):
+    weights = np.random.uniform(-0.01, 0.01, n_inputs + 1)
+    return weights
+
+def step_function(z):
+    return 1 if z > 0 else 0
+
+def train_widrow_hoff(X, y, weights, threshold,learning_rate, n_iterations=100):
+
+    num_samples = X.shape[0]
+    bias_column = np.ones((num_samples, 1))
+    X = np.concatenate((bias_column, X), axis=1)
+    weights[0] = -threshold
+
+
+    for iteration in range(n_iterations):
+        for i in range(num_samples):
+            xi = X[i]
+            d = y[i]
+
+    
+            weighted_sum = np.dot(weights, xi)
+            y_pred = step_function(weighted_sum)
+
+    
+            error = d - y_pred
+
+            # using the Widrow-Hoff rule
+            weights = weights + learning_rate * error * xi
+
+    return weights
+
+def predict_perceptron(X_test, weights):
+    num_samples = X_test.shape[0]             
+    bias_column = np.ones((num_samples, 1)) 
+    X_test_with_bias = np.concatenate((bias_column, X_test), axis=1)
+
+    predictions = []
+
+    for i in range(num_samples):
+        xi = X_test_with_bias[i]
+        dot_product = np.dot(weights, xi)
+        output = step_function(dot_product)
+        predictions.append(output)
+
+    return predictions
+
+
+data = pd.read_csv('AND_DATASET_Custom.csv', header=0 )
+X = data.iloc[:, :-1].values
+y = data.iloc[:, -1].values
+
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Initialize and train the perceptron
+n_inputs = X.shape[1]
+weights = initialize_weights(n_inputs)
+weights = train_widrow_hoff(X_train, y_train, weights, threshold = 0.5, learning_rate=.01, n_iterations=100)
+
+
+# testing
+y_pred = predict_perceptron(X_test, weights)
+accuracy = accuracy_score(y_test, y_pred)
+print("Accuracy on test set (AND_DATASET_Custom):", accuracy*100, '%')
+
+
+
+########################################################################################################### Module 3
+import numpy as np
+
+def initialize_weights(input_size, hidden_size, output_size):
+    W1 = np.random.randn(hidden_size, input_size + 1) * 0.01
+    W2 = np.random.randn(output_size, hidden_size + 1) * 0.01
+    return W1, W2
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+def sigmoid_derivative(x):
+    return x * (1 - x)
+
+def forward(X, W1, W2):
+    X = np.insert(X, 0, 1)  # Bias input
+    hidden_input = np.dot(W1, X)
+    hidden_output = sigmoid(hidden_input)
+    
+    hidden_output = np.insert(hidden_output, 0, 1)  # Bias in hidden layer
+    final_input = np.dot(W2, hidden_output)
+    final_output = sigmoid(final_input)
+    return X, hidden_input, hidden_output, final_input, final_output
+
+def backward(X, y, W1, W2, hidden_output, final_output, learning_rate):
+    output_error = (y - final_output) * sigmoid_derivative(final_output)
+    hidden_error = sigmoid_derivative(hidden_output[1:]) * np.dot(W2[:, 1:].T, output_error)
+
+    W2 += learning_rate * np.outer(output_error, hidden_output)  # Update output weights
+    W1 += learning_rate * np.outer(hidden_error, X)  # Update hidden weights
+
+    return W1, W2
+
+def compute_accuracy(X_test, y_test, W1, W2):
+    correct = 0
+    for X, y in zip(X_test, y_test):
+        _, _, _, _, output = forward(X, W1, W2)
+        predicted = 1 if output >= 0.5 else 0
+        if predicted == y:
+            correct += 1
+    return (correct / len(X_test)) * 100
+
+def train(X_train, y_train, W1, W2, learning_rate, epochs=3000):
+    for epoch in range(epochs):
+        for X, y in zip(X_train, y_train):
+            X, hidden_input, hidden_output, final_input, final_output = forward(X, W1, W2)
+            W1, W2 = backward(X, y, W1, W2, hidden_output, final_output, learning_rate)
+
+        if epoch % 1000 == 0:
+            accuracy = compute_accuracy(X_train, y_train, W1, W2)
+            print(f"Epoch {epoch}: Accuracy = {accuracy:.2f}%")
+
+    return W1, W2
+
+
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+
+if __name__ == "__main__":
+    xor_dataset = pd.read_csv('xor_dataset.csv')
+
+    X = xor_dataset[['Input1', 'Input2']].values
+    y = xor_dataset['Output'].values
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    input_size = 2
+    hidden_size = 8
+    output_size = 1
+    learning_rate = 0.5
+
+    W1, W2 = initialize_weights(input_size, hidden_size, output_size)
+    W1, W2 = train(X_train, y_train, W1, W2, learning_rate)
+
+    # Compute accuracy on test set
+    final_accuracy = compute_accuracy(X_test, y_test, W1, W2)
+    print(f"Accuracy on Test Set: {final_accuracy:.2f}%\n")
+
+    for X in X_test:
+        _, _, _, _, output = forward(X, W1, W2)
+        predicted = 1 if output >= 0.5 else 0
+        print(f"Input: {X}, Predicted: {predicted}")
+
+
 
 
